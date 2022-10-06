@@ -49,14 +49,10 @@ train_colin$remove
 ################################################################################
 #                                   plot                                       #
 ################################################################################
-p1 <- train_features %>%
-    count(cp_type) %>%
-    add_tally(n, name="total") %>%
-    mutate(perc = n/total) %>%
-    ggplot(aes(cp_type, perc, fill = cp_type)) +
-    geom_col() + 
-    scale_y_continuous()
-p1
+
+barplot(summary(as.factor(train_features$cp_type)))
+barplot(summary(as.factor(train_features$cp_time)))
+barplot(summary(as.factor(train_features$cp_dose)))
 
 # reduction des dimension et ACP
 # visualisation
