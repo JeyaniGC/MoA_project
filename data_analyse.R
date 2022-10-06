@@ -59,6 +59,19 @@ barplot(summary(as.factor(train_features$cp_time)))
 barplot(summary(as.factor(train_features$cp_dose)))
 # high & low dose
 
+hist(train_features$'g-0')
+# distribution of g-0
+
+hist(train_features$`c-0`)
+# distribution of c-0
+
+########## MoA
+summary(train_score)
+for(i in 1:dim(train_score)[1]){
+    
+}
+prop_moa <- apply(train_score[, -1], MARGIN=1, FUN=sum)
+
 # reduction des dimension et ACP
 # visualisation
 train_pca <- PCA(train_ft)
