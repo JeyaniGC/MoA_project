@@ -67,10 +67,15 @@ hist(train_features$`c-0`)
 
 ########## MoA
 summary(train_score)
+
+prop_moa <- rep(NA, size = length(train_score)[1])
 for(i in 1:dim(train_score)[1]){
-    
+    prop_moa[i] = sum(train_score[i, -1])
 }
-prop_moa <- apply(train_score[, -1], MARGIN=1, FUN=sum)
+
+barplot(summary(as.factor(prop_moa))/length(train_score)[1], ylim=c(0, 80))
+# We have almost 45% of our data that has 0 MoA
+
 
 # reduction des dimension et ACP
 # visualisation
