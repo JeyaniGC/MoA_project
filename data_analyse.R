@@ -23,10 +23,16 @@ test_features <- read_csv("data/test_features.csv")
 #                                   Exploration                                #
 ################################################################################
 summary(train_features)
+# features with 'g-' are gene expression data
+# features with 'c-' are cell viability data
 spec(train_features)
+# columns with 'cp-' are information on the drugs used or not
 
-# Sélectionn des variables 
-# matrice de corrélation
+which(is.na(train_features)==T)
+# No NA in the dataset
+
+# Selectionn des variables 
+# matrice de correlation
 train_ft <- train_features %>% 
   dplyr::select(-sig_id, -cp_type, -cp_dose, -cp_time)
 
