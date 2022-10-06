@@ -73,8 +73,9 @@ for(i in 1:dim(train_score)[1]){
     prop_moa[i] = sum(train_score[i, -1])
 }
 
-barplot(summary(as.factor(prop_moa))/length(train_score)[1], ylim=c(0, 80))
-# We have almost 45% of our data that has 0 MoA
+barplot(summary(as.factor(prop_moa))*100/dim(train_score)[1], ylim=c(0, 60))
+# We have almost 40% of our data that has 0 MoA
+# Almost 50% have 1 MoA
 
 
 # reduction des dimension et ACP
