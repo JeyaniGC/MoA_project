@@ -20,7 +20,7 @@ test_features <- read_csv("data/test_features.csv")
 
 
 ################################################################################
-#                                   Exploration                                #
+#                                   Clean data                                 #
 ################################################################################
 summary(train_features)
 # features with 'g-' are gene expression data
@@ -31,27 +31,27 @@ spec(train_features)
 which(is.na(train_features)==T)
 # No NA in the dataset
 
-# Selectionn des variables 
-# matrice de correlation
+# Selection of variables
 train_ft <- train_features %>% 
-  dplyr::select(-sig_id, -cp_type, -cp_dose, -cp_time)
+    dplyr::select(-sig_id, -cp_type, -cp_dose, -cp_time)
 
+# correlation matrix
 train_cor <- cor(train_ft)
-
-# plot qui ne marche point
-corrplot(train_cor, tl.cex = 0.5)
-
+#corrplot(train_cor, tl.cex = 0.5)  # plot doesn't work
 var <- findCorrelation(train_cor, cutoff = 0.95, names = T)
-# pas de VA corrélés
+# pas de VA correlees
 
+# Colinearity
 train_colin <- caret::findLinearCombos(train_ft)
 train_colin$remove
 # pas de colin 
 
-# clean dataset
+################################################################################
+#                                   plot                                       #
+################################################################################
 
-# réduction des dimension et ACP
-# visuslisation
+# reduction des dimension et ACP
+# visualisation
 train_pca <- PCA(train_ft)
 
 
