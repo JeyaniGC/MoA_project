@@ -51,8 +51,13 @@ train_colin$remove
 ################################################################################
 
 barplot(summary(as.factor(train_features$cp_type)))
+# a lot more treatement data than control
+
 barplot(summary(as.factor(train_features$cp_time)))
+# 3 duration of treatment
+
 barplot(summary(as.factor(train_features$cp_dose)))
+# high & low dose
 
 # reduction des dimension et ACP
 # visualisation
