@@ -9,7 +9,19 @@ library(corrplot)
 library(FactoMineR)
 library(tidyr)
 
+################################################################################
+#                                   Load Data                                  #
+################################################################################
 train_features <- read_csv("data/train_features.csv")
+train_score <- read_csv("data/train_targets_scored.csv")
+train_drug <- read_csv("data/train_drug.csv")
+
+test_features <- read_csv("data/test_features.csv")
+
+
+################################################################################
+#                                   Exploration                                #
+################################################################################
 summary(train_features)
 spec(train_features)
 
