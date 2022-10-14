@@ -130,4 +130,6 @@ plotVar(train_pca, var.names = F)
 # on montre que la première dim est essentielle
 plot(train_pca)
 
-          
+write.csv(moa, "moa.csv")
+write.csv(train_ft, "train_ft.csv")
+write.csv(train_features_clean, "train_feature_clean.csv")
