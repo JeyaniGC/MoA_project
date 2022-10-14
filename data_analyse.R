@@ -10,6 +10,8 @@ library(FactoMineR)
 library(tidyr)
 library(mixOmics)
 library(dplyr)
+library(ggplot2)
+library(viridis)
 
 ################################################################################
 #                                   Load Data                                  #
@@ -36,7 +38,7 @@ which(is.na(train_features)==T)
 
 # Selection of variables
 train_ft <- train_features %>% 
-    dplyr::select(-cp_type, -cp_dose, -cp_time)
+    dplyr::select(-sig, -cp_type, -cp_dose, -cp_time)
 
 # correlation matrix
 train_cor <- cor(train_ft)
@@ -83,7 +85,7 @@ barplot(summary(as.factor(prop_moa))*100/dim(train_score)[1], ylim=c(0, 60))
 placebo <- train_features %>% 
   filter(cp_type == "ctl_vehicle")
 
-vire les placebo
+# vire les placebo
 score_no_vehicule <- train_score[train_features$cp_type == "trt_cp",]
 
 # vire les MoA qui sont assignés à aucune catégorie 
@@ -96,7 +98,15 @@ moa <- score_no_vehicule %>%
 
 
 train_ft <- train_features %>% 
-  filter(train_features$sig_id %in% moa$sig_id)
+  filter(train_features$sig_id %in% moa$sig_id) %>% 
+  select(-cp_type, -cp_time, -cp_dose)
+
+target_sums <- train_score %>% 
+  select(-sig_id) %>% 
+  # compte l'occurence de chaque MoA equivalent d'un colSums
+  summarise(across(everything(), sum)) %>% 
+  # Passe les rows en col et inversement avec 2 colonnes target et sum
+  pivot_longer(everything(), names_to = "target", values_to = "sum")
 
 target_sums %>% 
   separate(target, into = c("a", "b", "c", "d", "e", "type"), fill = "left") %>% 
@@ -107,18 +117,17 @@ target_sums %>%
   ggplot(aes(reorder(type, n, FUN = min), n, fill = n)) +
   geom_col() +
   geom_text(aes(label = sprintf("%.2f%%", perc*100)), nudge_y = 6) +
-  coord_flip() +
-  scale_fill_viridis() +
-  scale_x_discrete(labels = function(x) lapply(str_wrap(x, width = 25), paste, collapse="\n")) +
-  theme_minimal() +
-  theme(legend.position = "none", plot.subtitle = element_text(size = 10)) +
-  labs(x = "", y = "", title = "Common final terms in class names")
+  theme_minimal()
+
+train_features_clean <- train_features %>% 
+  filter(train_features$sig_id %in% train_ft$sig_id)
 
 # reduction des dimension et ACP
 # visualisation
 train_pca <- pca(train_ft)
-plotIndiv(train_pca, var.names = F)
+plotIndiv(train_pca, var.names = F, group = train_features_clean$cp_time)
 plotVar(train_pca, var.names = F)
+# on montre que la première dim est essentielle
 plot(train_pca)
 
           
