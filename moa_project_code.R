@@ -149,5 +149,7 @@ plot(train_pca)
 
 # upload data
 write.csv(train_clean, "train_clean.csv")
-write.csv(train_ft, "train_ft.csv")
-write.csv(train_features_clean, "train_feature_clean.csv")
+# train features without placebo and Moa == 0V
+write.csv(train_ft_noplacebo_nomoa, "train_nomoa_noplacebo.csv")
+# score without MoA == 0 and placebo
+write.csv(score_no_vehicule, "score_nomoa_noplacebo.csv")
