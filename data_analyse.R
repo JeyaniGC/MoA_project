@@ -1,4 +1,4 @@
-rm(list=ls()) 
+rm(list=ls())
 
 library(readr)
 library(caret)
@@ -38,7 +38,7 @@ which(is.na(train_features)==T)
 
 # Selection of variables
 train_ft <- train_features %>% 
-    dplyr::select(-sig, -cp_type, -cp_dose, -cp_time)
+    dplyr::select(-sig_id, -cp_type, -cp_dose, -cp_time)
 
 # correlation matrix
 train_cor <- cor(train_ft)
@@ -85,7 +85,7 @@ barplot(summary(as.factor(prop_moa))*100/dim(train_score)[1], ylim=c(0, 60))
 placebo <- train_features %>% 
   filter(cp_type == "ctl_vehicle")
 
-# vire les placebo
+# vire les placebo de train_score
 score_no_vehicule <- train_score[train_features$cp_type == "trt_cp",]
 
 # vire les MoA qui sont assignés à aucune catégorie 
@@ -93,12 +93,12 @@ score_no_vehicule <- score_no_vehicule %>%
   filter(rowSums(across(where(is.numeric))) != 0)
   
 # train features avec pas de placebo et pas de MoA
-moa <- score_no_vehicule %>% 
+train_ft_noplacebo_nomoa <- score_no_vehicule %>% 
   rbind(train_score[which(train_score$sig_id %in% placebo$sig_id),])
 
 
 train_ft <- train_features %>% 
-  filter(train_features$sig_id %in% moa$sig_id) %>% 
+  filter(train_features$sig_id %in% train_ft_noplacebo_nomoa$sig_id) %>% 
   select(-cp_type, -cp_time, -cp_dose)
 
 target_sums <- train_score %>% 
@@ -122,10 +122,13 @@ target_sums %>%
 train_features_clean <- train_features %>% 
   filter(train_features$sig_id %in% train_ft$sig_id)
 
+train_pca_data <- train_features %>% 
+  dplyr::select(-cp_time, -cp_type, -cp_dose)
+
 # reduction des dimension et ACP
 # visualisation
-train_pca <- pca(train_ft)
-plotIndiv(train_pca, var.names = F, group = train_features_clean$cp_time)
+train_pca <- pca(train_pca_data)
+plotIndiv(train_pca, var.names = F, group = train_features$cp_time)
 plotVar(train_pca, var.names = F)
 # on montre que la première dim est essentielle
 plot(train_pca)
@@ -133,3 +136,20 @@ plot(train_pca)
 write.csv(moa, "moa.csv")
 write.csv(train_ft, "train_ft.csv")
 write.csv(train_features_clean, "train_feature_clean.csv")
+
+
+# faire du non supervisee au debut pour voir si on peut
+# delimiter des classes au debut 
+# si on peut delimiter ces groupes, on bosse que sur ça et on tej le reste
+
+# pas de softmax possible psk plusieurs classes donc plutot MSE
+# ou
+# sortir le vecteur qui contient les proba d'appartenir a un MoA,
+# on def un seuil et si la proba et superieur a ce seuil,
+# on sort les var a la main et il sera assigné au MoA
+
+# reseau mimetique : 1 vs all
+# 
+
+# pour les données sans MoA : assigne autre classe -> pas fou
+# les eliminer : ce qui paraît mieux et maybe les utiliser comme données de test
