@@ -139,17 +139,10 @@ train_features_clean <- train_features %>%
   filter(train_features$sig_id %in% score_clean$sig_id)%>%
     dplyr::select(-cp_type, -cp_dose, -cp_time)
 # normalise
-train_features_clean <- cbind(train_features_clean$sig_id, data.frame(scale(train_features_clean[, -1])))
+train_features_clean <- cbind(train_features_clean$sig_id, 
+  data.frame(scale(train_features_clean[, -1])))
 # binarise
-for (i in 1:16313){
-  for (j in 2:873){
-    if (train_features_clean[i,j]>0){
-      train_features_clean[i,j] = 1 #positif, viable
-    } else{
-      train_features_clean[i,j] = 0 #negatif, non viable
-    }
-  }
-}
+features_clean[-1] <- apply(features[-1], 2, function(x) {ifelse(x>0, 1, 0)})
 
 
 # clean train_drug
@@ -181,18 +174,22 @@ barplot(summary(as.factor(train_features$cp_dose)), col=colour)
 
 # Histogram of the first gene expression
 # in rought data
-hist(train_features$'g-0', col=colour[1])
+hist(train_features$'g-0', col=colour[1], 
+  main="Distribution de l'expression du gène 'g-0' des molécules thérapeutiques")
 # distribution of g-0
-hist(train_features_clean$'g-0', col=colour[1])
+barplot(summary(as.factor(train_features_clean$'g-0')), col=colour,
+  main="Distribution de l'expression du gène 'g-0' des molécules thérapeutiques après pre-processing")
 # distribution of g-0
 
 
 #  Histogram of the first cell viability
 # in rought data
-hist(train_features$'c-0', col=colour[1])
+hist(train_features$'c-0', col=colour[1],
+  main="Distribution de la viabilité cellulaire de 'c-0' des molécules thérapeutiques")
 # distribution of c-0
 # in clean data
-hist(train_features_clean$'c-0', col=colour[1])
+barplot(summary(as.factor(train_features_clean$'c-0')), col=colour,
+  main="Distribution de la viabilité cellulaire de 'c-0' des molécules thérapeutiques après pre-processing")
 # distribution of c-0
 
 
@@ -203,7 +200,8 @@ for(i in 1:dim(train_score)[1]){
     prop_moa[i] = sum(train_score[i, -1])
 }
 
-barplot(summary(as.factor(prop_moa))*100/dim(train_score)[1], ylim=c(0, 60), col=colour)
+barplot(summary(as.factor(prop_moa))*100/dim(train_score)[1], 
+  ylim=c(0, 60), col=colour)
 # We have almost 40% of our data that has 0 MoA
 # Almost 50% have 1 MoA
 # In clean score data
@@ -212,7 +210,8 @@ for(i in 1:dim(score_clean)[1]){
   prop_moa_clean[i] = sum(score_clean[i, -1])
 }
 
-barplot(summary(as.factor(prop_moa_clean))*100/dim(score_clean)[1], ylim=c(0, 100), col=colour)
+barplot(summary(as.factor(prop_moa_clean))*100/dim(score_clean)[1], 
+  ylim=c(0, 100), col=colour)
 
 
 # Summary of the different MoA
@@ -233,6 +232,13 @@ target_sums %>%
   geom_col() +
   geom_text(aes(label = sprintf("%.2f%%", perc*100)), nudge_y = 6) +
   theme_minimal()
+
+target_sums_clean <- train_score_clean %>% 
+  dplyr::select(-sig_id) %>% 
+  # compte l'occurence de chaque MoA equivalent d'un colSums
+  summarise(across(everything(), sum)) %>% 
+  # Passe les rows en col et inversement avec 2 colonnes target et sum
+  pivot_longer(everything(), names_to = "target", values_to = "sum")
 
 ################################################################################
 #                                    ACP                                       #
