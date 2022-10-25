@@ -141,9 +141,12 @@ train_features_clean <- train_features %>%
 # normalise
 train_features_clean <- cbind(train_features_clean$sig_id, 
                               data.frame(scale(train_features_clean[, -1])))
+colnames(train_features_clean)[1] <- "sig_id"
+
 # binarise
-for (i in 2:dim(train_features_clean)[2]){
-  train_features_clean[,i] <- ifelse(train_features_clean[, i]>0, 1, 0)
+train_features_bool <- train_features_clean
+for (i in 2:dim(train_features_bool)[2]){
+  train_features_bool[,i] <- ifelse(train_features_bool[, i]>0, 1, 0)
 }
 
 
@@ -297,6 +300,8 @@ plot(train_pca, ylim=c(0, 0.4))
 
 # upload train_features_clean
 write.csv(train_features_clean, "train_features_clean.csv")
+# upload train_features_bool (binarised)
+write.csv(train_features_bool, 'train_features_boolean.csv')
 
 # upload score_clean (normalised and with a column no MoA)
 write.csv(score_clean, "train_score_clean.csv")
@@ -305,5 +310,6 @@ write.csv(score_resum.T, 'train_score_clean_boolean.csv')
 
 # upload train_drug_clean
 write.csv(train_drugs_clean, "train_drug_clean.csv")
+
 
 
