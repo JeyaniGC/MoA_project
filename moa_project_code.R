@@ -72,65 +72,29 @@ score_treatment_noMoA$noMoa <- rep(0, times=dim(score_treatment_noMoA)[1])
 # Add the placebo
 score_clean <- rbind(score_treatment_noMoA, score_placebo)
 
-# reduction y
-# change values to numeric
-score_t <- score_clean %>% 
-  t()
-
-target_sums <- score_clean %>% 
+score_sums <- train_score %>% 
   dplyr::select(-sig_id) %>% 
   # compte l'occurence de chaque MoA equivalent d'un colSums
   summarise(across(everything(), sum)) %>% 
-  # Passe les rows en col et inversement avec 2 colonnes target et sum
   pivot_longer(everything(), names_to = "target", values_to = "sum")
 
-type <- target_sums %>%  
-  separate(target, into = c("a", "b", "c", "d", "e", "type"), fill = "left") %>% 
-  select(type) 
+target <- head(sort(as.numeric(score_sums$sum), decreasing = T), 20)
+score_sums_clean <- score_sums[which(score_sums$sum %in% target),]
+sum(head(sort(as.numeric(score_sums$sum), decreasing = T), 20))
 
-# transposée
-colnames(score_t) <- score_t[1, ]
-score_t <- score_t[-1, ]
-dim(score_t)
-# change values to numeric
-score_t <- as.data.frame(apply(score_t, 2, as.numeric))
-# target and type
-target_type <- data.frame(target_sums$target, type)
-# add target and their type to scores
-type_score <- data.frame(target_type, score_t)
-# tot score by id to verify
-tot_score <- apply(type_score[-c(1, 2)], 2, sum)
+other_sum <- sum(as.numeric(score_sums$sum[!(score_sums$sum %in% target)]))
+other <- c('other', other_sum)
+score_sums_clean <- rbind(score_sums_clean, other)
 
-inhibitor <- type_score[which(type_score$type == 'inhibitor'),]
-inhib_score <- apply(inhibitor[-c(1, 2)], 2, sum)
+names <- colnames(train_score)
+other_target <- train_score[,!(names %in% score_sums_clean$target)]
+sum_otar <- rowSums(other_target[-1])
+other <- data.frame(other = sum_otar)
 
-antagonist <- type_score[which(type_score$type == 'antagonist'),]
-anta_score <- apply(antagonist[-c(1, 2)], 2, sum)
-
-agonist <- type_score[which(type_score$type == 'agonist'),]
-ago_score <- apply(agonist[-c(1, 2)], 2, sum)
-
-placebo <- type_score[which(type_score$type == 'noMoa'),]
-pla_score <- apply(placebo[-c(1, 2)], 2, sum)
-
-other <- type_score[!(type_score$type %in% c('inhibitor', 'antagonist', 'agonist', 'noMoa')),]
-other_score <- apply(other[-c(1, 2)], 2, sum)
-
-
-type <- c('inhibitor', 'antagonist', 'agonist', 'placebo', 'other')
-score_resum <- as.data.frame(rbind(inhib_score, anta_score, ago_score, pla_score, other_score))
-# totaux des scores resumés pr verif
-tot_resum <- apply(score_resum, 2, sum)
-
-# transpose pr avoir dtf comme au debut
-score_resum.T <- as.data.frame(t(score_resum))
-names(score_resum.T) <- type
-# 0 ou 1
-score_resum.T$inhibitor <- ifelse(score_resum.T$inhibitor>=1, 1, 0)
-score_resum.T$antagonist <- ifelse(score_resum.T$antagonist>=1, 1, 0)
-score_resum.T$agonist <- ifelse(score_resum.T$agonist>=1, 1, 0)
-score_resum.T$placebo <- ifelse(score_resum.T$placebo>=1, 1, 0)
-score_resum.T$other <- ifelse(score_resum.T$other>=1, 1, 0)
+train_score_clean <- cbind(sig_id = train_score$sig_id, 
+                           train_score[,names %in% score_sums_clean$target],
+                           other)
+train_score_clean$other <- ifelse(train_score_clean$other>=1, 1, 0)
 
 
 
@@ -138,22 +102,17 @@ score_resum.T$other <- ifelse(score_resum.T$other>=1, 1, 0)
 train_features_clean <- train_features %>%
   filter(train_features$sig_id %in% score_clean$sig_id)%>%
     dplyr::select(-cp_type, -cp_dose, -cp_time)
-# normalise
-train_features_clean <- cbind(train_features_clean$sig_id, 
-                              data.frame(scale(train_features_clean[, -1])))
-colnames(train_features_clean)[1] <- "sig_id"
 
+# cut out outlayers
 for (i in 2:dim(train_features_clean)[2]){
   train_features_clean[,i] <- ifelse(train_features_clean[, i]<(-4), 0, train_features_clean[, i])
   train_features_clean[,i] <- ifelse(train_features_clean[, i]>4, 0, train_features_clean[, i])
 }
 
-
-# binarise
-train_features_bool <- train_features_clean
-for (i in 2:dim(train_features_bool)[2]){
-  train_features_bool[,i] <- ifelse(train_features_bool[, i]>0, 1, 0)
-}
+# normalise
+train_features_clean <- cbind(train_features_clean$sig_id, 
+                              data.frame(scale(train_features_clean[, -1])))
+colnames(train_features_clean)[1] <- "sig_id"
 
 
 # clean train_drug
@@ -195,11 +154,8 @@ hist(train_features$'g-0', col=colour[1],
      main="Distribution de l'expression du gène 'g-0' des molécules thérapeutiques")
 # distribution of g-0
 hist(train_features_clean$g.0, col=colour[1], 
+     xlim=c(-5, 5), 
      main="Distribution de l'expression du gène 'g-0' des molécules thérapeutiques")
-
-barplot(summary(as.factor(train_features_clean$g.0)), col=colour,
-        main="Distribution de l'expression du gène 'g-0'\n des molécules thérapeutiques après pre-processing")
-# distribution of g-0
 
 
 #  Histogram of the first cell viability
@@ -208,12 +164,9 @@ hist(train_features$'c-0', col=colour[1],
      main="Distribution de la viabilité cellulaire de 'c-0'\n des molécules thérapeutiques")
 # distribution of c-0
 # in clean data
-hist(train_features_clean$c.0, col=colour[1],
+hist(train_features_clean$c.0, col=colour[1], 
+     xlim=c(-5, 5),
      main="Distribution de la viabilité cellulaire de 'c-0'\n des molécules thérapeutiques")
-
-barplot(summary(as.factor(train_features_clean$c.0)), col=colour,
-        main="Distribution de la viabilité cellulaire de 'c-0'\n des molécules thérapeutiques après pre-processing")
-# distribution of c-0
 
 
 # Distribution of MoA attributed
@@ -312,16 +265,15 @@ plot(train_pca, ylim=c(0, 0.4))
 
 # upload train_features_clean
 write.csv(train_features_clean, "train_features_clean.csv")
-# upload train_features_bool (binarised)
-write.csv(train_features_bool, 'train_features_boolean.csv')
 
 # upload score_clean (normalised and with a column no MoA)
 write.csv(score_clean, "train_score_clean.csv")
 # upload score_reum.T (binarised)
-write.csv(score_resum.T, 'train_score_clean_boolean.csv')
+write.csv(train_score_clean, 'train_score_clean_best.csv')
 
 # upload train_drug_clean
 write.csv(train_drugs_clean, "train_drug_clean.csv")
+
 
 
 
