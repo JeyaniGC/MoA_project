@@ -143,6 +143,12 @@ train_features_clean <- cbind(train_features_clean$sig_id,
                               data.frame(scale(train_features_clean[, -1])))
 colnames(train_features_clean)[1] <- "sig_id"
 
+for (i in 2:dim(train_features_clean)[2]){
+  train_features_clean[,i] <- ifelse(train_features_clean[, i]<(-4), 0, train_features_clean[, i])
+  train_features_clean[,i] <- ifelse(train_features_clean[, i]>4, 0, train_features_clean[, i])
+}
+
+
 # binarise
 train_features_bool <- train_features_clean
 for (i in 2:dim(train_features_bool)[2]){
@@ -188,6 +194,9 @@ train_features %>%
 hist(train_features$'g-0', col=colour[1], 
      main="Distribution de l'expression du gène 'g-0' des molécules thérapeutiques")
 # distribution of g-0
+hist(train_features_clean$g.0, col=colour[1], 
+     main="Distribution de l'expression du gène 'g-0' des molécules thérapeutiques")
+
 barplot(summary(as.factor(train_features_clean$g.0)), col=colour,
         main="Distribution de l'expression du gène 'g-0'\n des molécules thérapeutiques après pre-processing")
 # distribution of g-0
@@ -199,6 +208,9 @@ hist(train_features$'c-0', col=colour[1],
      main="Distribution de la viabilité cellulaire de 'c-0'\n des molécules thérapeutiques")
 # distribution of c-0
 # in clean data
+hist(train_features_clean$c.0, col=colour[1],
+     main="Distribution de la viabilité cellulaire de 'c-0'\n des molécules thérapeutiques")
+
 barplot(summary(as.factor(train_features_clean$c.0)), col=colour,
         main="Distribution de la viabilité cellulaire de 'c-0'\n des molécules thérapeutiques après pre-processing")
 # distribution of c-0
@@ -275,7 +287,7 @@ color_cptype <- train_features %>%
   dplyr::select(cp_type)
 
 color_cptime <- train_features %>% 
-  filter(train_features$sig_id %in% train_clean$sig_id) %>% 
+  filter(train_features$sig_id %in% train_features_clean$sig_id) %>% 
   dplyr::select(cp_time)
 
 color_cpdose <- train_features %>% 
@@ -310,6 +322,7 @@ write.csv(score_resum.T, 'train_score_clean_boolean.csv')
 
 # upload train_drug_clean
 write.csv(train_drugs_clean, "train_drug_clean.csv")
+
 
 
 
