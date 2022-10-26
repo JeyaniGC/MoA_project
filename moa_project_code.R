@@ -72,7 +72,7 @@ score_treatment_noMoA$noMoa <- rep(0, times=dim(score_treatment_noMoA)[1])
 # Add the placebo
 score_clean <- rbind(score_treatment_noMoA, score_placebo)
 
-score_sums <- train_score %>% 
+score_sums <- score_clean %>% 
   dplyr::select(-sig_id) %>% 
   # compte l'occurence de chaque MoA equivalent d'un colSums
   summarise(across(everything(), sum)) %>% 
@@ -86,13 +86,13 @@ other_sum <- sum(as.numeric(score_sums$sum[!(score_sums$sum %in% target)]))
 other <- c('other', other_sum)
 score_sums_clean <- rbind(score_sums_clean, other)
 
-names <- colnames(train_score)
-other_target <- train_score[,!(names %in% score_sums_clean$target)]
+names <- colnames(score_clean)
+other_target <- score_clean[,!(names %in% score_sums_clean$target)]
 sum_otar <- rowSums(other_target[-1])
 other <- data.frame(other = sum_otar)
 
-train_score_clean <- cbind(sig_id = train_score$sig_id, 
-                           train_score[,names %in% score_sums_clean$target],
+train_score_clean <- cbind(sig_id = score_clean$sig_id, 
+                           score_clean[,names %in% score_sums_clean$target],
                            other)
 train_score_clean$other <- ifelse(train_score_clean$other>=1, 1, 0)
 
